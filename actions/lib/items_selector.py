@@ -75,14 +75,11 @@ class ItemsSelector(object):
         return self._apply_filters(indices, act_on='indices')
 
 
-    def fetch(self, items=None):
-        """
-        Invokes snapshots or indices.
-        """
-        if items not in ['indices', 'snapshots']:
-            raise ValueError('invalid argument: {0}'.format(items))
+    def fetch(self, act_on):
+        if act_on not in ['indices', 'snapshots']:
+            raise ValueError('invalid argument: {0}'.format(act_on))
 
-        if items == 'indices':
+        if act_on == 'indices':
             return self.indices()
         else:
             return self.snapshots()

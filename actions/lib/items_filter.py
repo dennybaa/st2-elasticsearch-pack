@@ -40,6 +40,11 @@ class ItemsFilter(object):
 
 
     @property
+    def all_items(self):
+        return self.opts.get('all_{0}'.format(self.act_on), None)
+
+
+    @property
     def filter_list(self):
         return self.built_list
    
@@ -57,11 +62,11 @@ class ItemsFilter(object):
         Apply filters to a working list of indices/snapshots and
         return resulting list.
         """
+        self.act_on = act_on
         result_list = self._apply_closed_timerange(working_list)
-        self.all_items = self.opts.get('all_{0}'.format(act_on), None)
 
         if self.all_items:
-            logger.info('Matching all {0}. Ignoring parameters other than exclude.'.format(self.all_items))
+            logger.info('Matching all {0}. Ignoring parameters other than exclude.'.format(self.act_on))
 
         # Closed time range couldn't be applied
         if result_list is None:
@@ -89,6 +94,7 @@ class ItemsFilter(object):
         In case filtering is not applied None is returned.
         """
         if self.closed_timerange:
+            newer_than, older_than = self.get_timebased()
             if newer_than['value'] < older_than['value']:
                 print 'ERROR: Wrong time period newer_than parameter must be > older_than.'
                 sys.exit(1)
@@ -99,6 +105,7 @@ class ItemsFilter(object):
                 newer_range = set(apply_filter(working_list, **newer_than))
                 older_range = set(apply_filter(working_list, **older_than))
                 result_list = list(newer_range & older_range)
+                return result_list
 
 
     def _build(self):

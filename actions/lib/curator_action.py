@@ -1,9 +1,7 @@
 from st2actions.runners.pythonrunner import Action
-from utils import compact_dict, xstr
+from curator.api.utils import index_closed
+from utils import xstr
 import utils
-import index_selection
-import snapshot_selection
-import curator.api as api
 import logging
 import sys
 import itertools
@@ -12,33 +10,26 @@ logger = logging.getLogger(__name__)
 
 
 class CuratorAction(Action):
-    CMD2API = {
-        'snapshot': 'create_snapshot',
-        'open': 'opener'
-    }
 
     def __init__(self, config=None):
         super(CuratorAction, self).__init__(config=config)
         self.success = True
-        self._operate_on = None
+        self._act_on = None
+        self._command = None
 
 
     @property
-    def operate_on(self):
-        if not self._operate_on:
-            self._operate_on = self.config.command_on or 'indices'
-        return self._operate_on
+    def act_on(self):
+        if not self._act_on:
+            _act_on = 'snapshots' if '.snapshots' in self.action else 'indices'
+            self._act_on = _act_on
+        return self._act_on
 
-
-    def fetch_items(self):
-        """
-        Retrieve items invokes propper method returning its results:
-        indices or snapshots.
-        """
-        if self.operate_on == 'snapshots':
-            return snapshot_selection.snapshots(self.client, self.config)
-        else:
-            return index_selection.indices(self.client, self.config)
+    @property
+    def command(self):
+        if not self._command:
+            self._command = self.action.split('.')[0]
+        return self._command
 
 
     def set_up_logging(self):
@@ -61,9 +52,9 @@ class CuratorAction(Action):
         # !!!!
         self.config.timeout = 600
 
-        if self.config.command in ('snapshot', 'optimize') and self.config.timeout < 21600:
+        if self.command in ('snapshot', 'optimize') and self.config.timeout < 21600:
             logger.warn('Raising timeout because {0} operation might take time!'.
-                            format(self.config.command))
+                            format(self.command))
             self.config.timeout = 21600
 
 
@@ -71,114 +62,39 @@ class CuratorAction(Action):
         """
         Log dry run output with the command which would have been executed.
         """
-        client = self.client
-        command = self.config.command
+        client = self.api.client
+        command = self.command
         print "DRY RUN MODE.  No changes will be made."
         for item in items:
-            if self.operate_on == 'snapshots':
+            if self.act_on == 'snapshots':
                 print "DRY RUN: {0}: {1}".format(command, item)
             else:
-                print "DRY RUN: {0}: {1}{2}".format(command, item, ' (CLOSED)' if api.index_closed(client, item) else '')
-
+                print "DRY RUN: {0}: {1}{2}".format(command, item, ' (CLOSED)' if index_closed(client, item) else '')
 
 
     def do_show(self):
         """
         Show indices or snapshots command.
         """
-        items = self.fetch_items()
+        items = self.api.fetch(act_on=self.act_on)
         if not self.config.dry_run:
-            logger.info('Matching {0}:'.format(self.operate_on))
             for item in items:
                 print item
         else:
             self.show_dry_run(items)
-
         sys.exit(0)
 
 
-    def chunked_item_lists(self):
-        """
-        Iterate over whole list of indices in chunks.
-        In case operation is performed on snapshots the won't be chunked.
-        """
-        working_list = self.fetch_items()
-        # The snapshot command should get the full list,
-        # but the index list may need to be segmented.
-        if len(api.utils.to_csv(working_list)) > 3072 and \
-                                self.operate_on == 'indices':
-
-            logger.warn('Very large list of indices.  Breaking it up into smaller chunks.')
-            index_lists = utils.chunk_index_list(working_list)
-            for l in index_lists:
-                yield l
-        else:
-            yield working_list
-
-
-    def _api_call_kwargs(self):
-        opts = self.config
-        command = opts.command
-        if command == "alias":
-            kwargs = {'alias': opts.name, 'remove': opts.remove}
-        elif command == 'allocation':
-            kwargs = {'rule': opts.rule}
-        elif command == 'bloom':
-            kwargs = {'delay': opts.delay}
-        elif command == 'optimize':
-            kwargs = {'max_num_segments': opts.max_num_segments,
-                      'request_timeout': opts.request_timeout,
-                      'delay': opts.delay}
-        elif command == 'replicas':
-            kwargs = {'replicas': opts.count}
-        elif command == 'snapshot':
-            kwargs = {'name': opts.name, 'prefix': opts.snapshot_prefix, 
-                      'repository': opts.repository, 'partial': opts.partial,
-                      'ignore_unavailable': opts.ignore_unavailable,
-                      'include_global_state': opts.include_global_state,
-                      'wait_for_completion': opts.wait_for_completion,
-                      'request_timeout': opts.request_timeout}
-        else:
-            kwargs = {}
-        # Compact all those values with none and return
-        return compact_dict(kwargs)
-
-
-    def _api_call(self, items):
-        """
-        Invoke curator API method.
-        """
-        opts = self.config
-        command = opts.command
-        client = self.client
-        kwargs = self._api_call_kwargs()
-        if command in [ 'alias', 'allocation', 'bloom', 'close', 'open' 
-                        'optimize', 'replicas', 'snapshot' ]:
-            func_name = self.CMD2API.get(command, command)
-            api_method = api.__dict__.get(func_name, None)
-            if not api_method:
-                print 'Error: unsupported api method called: {0}'.format(command)
-                sys.exit(1)
-
-            # Call api method with/without parameters
-            if kwargs:
-                return api_method(client, items, **kwargs)
-            else:
-                return api_method(client, items)
-
-            # Also need:
-            # 1. delete and delete_snapshot(client, snapshot=items, repository=opts.repository)
-
-    def exit_msg(self):
+    def exit_msg(self, success):
         """
         Display a message corresponding to whether the job completed successfully or
         not, then exit.
         """
-        if self.success:
+        if success:
             logger.info("Job completed successfully.")
         else:
             logger.warn("Job did not complete successfully.")
-        sys.exit(0) if self.success else sys.exit(1)
+        sys.exit(0) if success else sys.exit(1)
 
 
     def do_command(self):
@@ -186,9 +102,7 @@ class CuratorAction(Action):
         Do the command.
         """
         opts = self.config
-
-        if opts.command == "show":
-            # do_show will exit
+        if self.command == "show":
             self.do_show()
 
         # I don't care about using only timestring if it's a `dry_run` of show
@@ -198,21 +112,11 @@ class CuratorAction(Action):
             logger.warn('Actions can be performed on all indices matching {0}'.format(opts.timestring))
 
         if opts.dry_run:
-            items = self.fetch_items()
+            items = self.api.fetch(act_on=self.act_on)
             self.show_dry_run(items)
         else:
-            logger.info("Job starting: {0} {1}".format(opts.command, self.operate_on))
+            logger.info("Job starting: {0} {1}".format(self.command, self.act_on))
             logger.debug("Params: {0}".format(opts))
 
-            # Make two generators since we want show all items when debug is on.
-            chunked_list, working_list = itertools.tee(self.chunked_item_lists())
-            working_list = list(itertools.chain(*working_list))
-            logger.debug('ACTION {0} {1} will be executed against: {2}'.format(opts.command,
-                                                            self.operate_on, working_list))
-
-            for items in chunked_list:
-                result = self._api_call(items)
-                if not result:
-                    self.success = False
-
-            self.exit_msg()
+            success = self.api.invoke(method=self.action)
+            self.exit_msg(success)
