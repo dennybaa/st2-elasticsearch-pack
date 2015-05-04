@@ -54,30 +54,6 @@ def get_client(**kwargs):
         sys.exit(1)
 
 
-def chunk_index_list(indices):
-    """
-    This utility chunks very large index lists into 3KB chunks
-    It measures the size as a csv string, then converts back into a list
-    for the return value.
-    :arg indices: A list of indices to act on.
-
-    !When version > 3.0.3 of curator is released. Should be removed!
-    """
-    chunks = []
-    chunk = ""
-    for index in indices:
-        if len(chunk) < 3072:
-            if not chunk:
-                chunk = index
-            else:
-                chunk += "," + index
-        else:
-            chunks.append(chunk.split(','))
-            chunk = index
-    chunks.append(chunk.split(','))
-    return chunks
-
-
 def compact_dict(source_dict):
     """
     Drop all elements equal to None
