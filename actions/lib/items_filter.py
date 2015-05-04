@@ -117,22 +117,27 @@ class ItemsFilter(object):
         opts = self.opts
         filter_list = []
 
-        # Add timebased filtering
-        timebased = zip(('newer_than', 'older_than'), (opts.newer_than,
-                                                       opts.older_than))
-        for opt, value in timebased:
-            if value is None: continue
-            f = api.filter.build_filter(kindOf=opt, value=value,
-                                        timestring=opts.timestring,
-                                        time_unit=opts.time_unit)
-            if f: filter_list.append(f)
-
         # Timestring used alone without newer_than/older_than
         if opts.timestring is not None and not all(( xstr(opts.newer_than),
                                                      xstr(opts.older_than) )):
             f = api.filter.build_filter(kindOf='timestring',
                                         value=opts.timestring)
             if f: filter_list.append(f)
+
+        # Adding timebased filtering
+        else:
+            if not opts.timestring:
+                print 'ERROR: Parameters newer_than/older_than require timestring to be given'
+                sys.exit(1)
+
+            timebased = zip(('newer_than', 'older_than'), (opts.newer_than,
+                                                           opts.older_than))
+            for opt, value in timebased:
+                if value is None: continue
+                f = api.filter.build_filter(kindOf=opt, value=value,
+                                            timestring=opts.timestring,
+                                            time_unit=opts.time_unit)
+                if f: filter_list.append(f)
 
         # Add filtering based on suffix|prefix|regex
         patternbased = zip(('suffix', 'prefix', 'regex'),

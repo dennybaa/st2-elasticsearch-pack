@@ -17,6 +17,7 @@
         description: "Include only indices ending with suffix."
       timestring:
         description: "Python strftime string to match your index definition, e.g. 2015.07.15 would be %Y.%m.%d."
+        default: "%Y.%m.%d"
       regex:
         description: "Provide your own regex, e.g '^prefix-.*-suffix$'."
       exclude:
@@ -52,6 +53,7 @@
         description: "Include only snapshots ending with suffix."
       timestring:
         description: "Python strftime string to match your snapshot's definition, e.g. 20150715020304 would be %Y%m%d%H%M%S."
+        default: "%Y%m%d%H%M%S"
       regex:
         description: "Provide your own regex, e.g '^prefix-.*-suffix$'."
       exclude:
