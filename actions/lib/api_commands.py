@@ -91,8 +91,8 @@ class APICommands(object):
             if self.opts.disk_space:
                 working_list = api.filter.filter_by_space(
                                     client, working_list,
-                                    disk_space=float(opts.disk_space),
-                                    reverse=(opts.reverse or True)
+                                    disk_space=float(self.opts.disk_space),
+                                    reverse=(self.opts.reverse or True)
                                )
         return working_list
 

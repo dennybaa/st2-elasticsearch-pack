@@ -64,7 +64,7 @@ class ItemsSelector(object):
             sys.exit(1)
 
         # Get a master-list of snapshots
-        snapshots = get_snapshots(self.client, repository=opts.repository)
+        snapshots = get_snapshots(self.client, repository=self.opts.repository)
         return self._apply_filters(snapshots, act_on='snapshots')
 
 

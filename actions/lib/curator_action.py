@@ -107,16 +107,15 @@ class CuratorAction(Action):
         """
         Do the command.
         """
-        opts = self.config
         # Show and exit
         self.command == "show" and self.do_show()
 
-        if opts.dry_run:
+        if self.config.dry_run:
             items = self.api.fetch(act_on=self.act_on)
             self.show_dry_run(items)
         else:
             logger.info("Job starting: {0} {1}".format(self.command, self.act_on))
-            logger.debug("Params: {0}".format(opts))
+            logger.debug("Params: {0}".format(self.config))
 
             success = self.api.invoke(command=self.action)
             self.exit_msg(success)
