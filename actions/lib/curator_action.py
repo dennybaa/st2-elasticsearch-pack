@@ -1,10 +1,9 @@
 from st2actions.runners.pythonrunner import Action
 from curator.api.utils import index_closed
-from utils import xstr
+from api_commands import APICommands
 import utils
 import logging
 import sys
-import itertools
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +15,7 @@ class CuratorAction(Action):
         self.success = True
         self._act_on = None
         self._command = None
+        self._api = None
 
 
     @property
@@ -30,6 +30,12 @@ class CuratorAction(Action):
         if not self._command:
             self._command = self.action.split('.')[0]
         return self._command
+
+    @property
+    def api(self):
+        if not self._api:
+            self._api = APICommands(**self.config)
+        return self._api
 
 
     def set_up_logging(self):
@@ -102,14 +108,8 @@ class CuratorAction(Action):
         Do the command.
         """
         opts = self.config
-        if self.command == "show":
-            self.do_show()
-
-        # I don't care about using only timestring if it's a `dry_run` of show
-        if not any((xstr(opts.newer_than), xstr(opts.older_than), opts.dry_run)) and \
-                opts.timestring:
-            logger.warn('Used only timestring parameter.')
-            logger.warn('Actions can be performed on all indices matching {0}'.format(opts.timestring))
+        # Show and exit
+        self.command == "show" and self.do_show()
 
         if opts.dry_run:
             items = self.api.fetch(act_on=self.act_on)
@@ -118,5 +118,5 @@ class CuratorAction(Action):
             logger.info("Job starting: {0} {1}".format(self.command, self.act_on))
             logger.debug("Params: {0}".format(opts))
 
-            success = self.api.invoke(method=self.action)
+            success = self.api.invoke(command=self.action)
             self.exit_msg(success)

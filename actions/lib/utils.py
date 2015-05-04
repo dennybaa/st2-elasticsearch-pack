@@ -63,6 +63,6 @@ def compact_dict(source_dict):
 
 def xstr(s):
     """
-    IdiotOmatic crap.
+    IdiotOmatic xstr.
     """
     return '' if s is None else str(s)

@@ -2,7 +2,7 @@ from curator.api.utils import *
 from curator.api.filter import *
 from items_filter import ItemsFilter
 from easydict import EasyDict
-from utils import get_client, compact_dict
+from utils import get_client, compact_dict, xstr
 import sys
 import logging
 
@@ -22,8 +22,15 @@ class ItemsSelector(object):
         :param source_items:   List of indices or snapshots.
         :param act_on:  Specifies whether we act on indices or snapshots.
         """
-        logger.debug("Full list of {0}: {1}".format(act_on, source_items))
         opts = self.opts
+
+        # I don't care about using only timestring if it's a `dry_run` of show
+        if not any((xstr(opts.newer_than), xstr(opts.older_than), opts.dry_run)) and \
+                opts.timestring:
+            logger.warn('Used only timestring parameter.')
+            logger.warn('Actions can be performed on all {0} matching {1}'.format(act_on, opts.timestring))
+
+        logger.debug("Full list of {0}: {1}".format(act_on, source_items))
         
         if not source_items:
             print 'ERROR. No {0} found in Elasticsearch.'.format(act_on)
