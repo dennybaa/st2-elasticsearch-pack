@@ -414,7 +414,7 @@
 
 
 - optimize:
-    description: "Optimize Indices"
+    description: "Optimize indices"
     parameters:
       delay:         
         description: "Pause *n* seconds after optimizing an index."

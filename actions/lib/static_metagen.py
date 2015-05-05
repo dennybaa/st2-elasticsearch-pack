@@ -38,7 +38,7 @@ class StaticMetagen(object):
                 "default": False
             },
             "timeout": {
-                "description": "ElasticSearch operation timeout in seconds.",
+                "description": "Elasticsearch operation timeout in seconds.",
                 "type": "integer",
                 "default": 600
             },
