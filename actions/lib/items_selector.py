@@ -65,13 +65,16 @@ class ItemsSelector(object):
         return sorted(list(set(working_list)))
 
 
-    def snapshots(self):
+    def snapshots(self, nofilters_showall=False):
         """
         Get a list of snapshots to act on from the provided arguments.
         """
         if not any((self.opts.all_snapshots, self.opts.snapshot, self.ifilter.filter_list)):
-            print 'Error: At least one snapshot filter parameter must be provided!'
-            sys.exit(1)
+            if nofilters_showall:
+                self.opts.all_snapshots = True
+            else:
+                print 'Error: At least one snapshot filter parameter must be provided!'
+                sys.exit(1)
 
         if not self.opts.repository:
             print 'Missing required parameter: repository.'
@@ -82,25 +85,28 @@ class ItemsSelector(object):
         return self._apply_filters(snapshots, act_on='snapshots')
 
 
-    def indices(self):
+    def indices(self, nofilters_showall=False):
         """
         Get a list of indices to act on from the provided arguments.
         """
         # Check if we have selection to operate
         if not any((self.opts.all_indices, self.opts.index, self.ifilter.filter_list)):
-            print 'Error: At least one index filter parameter must be provided!'
-            sys.exit(1)
+            if nofilters_showall:
+                self.opts.all_indices = True
+            else:
+                print 'Error: At least one index filter parameter must be provided!'
+                sys.exit(1)
 
         # Get a master-list of indices
         indices = get_indices(self.client)
         return self._apply_filters(indices, act_on='indices')
 
 
-    def fetch(self, act_on):
+    def fetch(self, act_on, nofilters_showall=False):
         if act_on not in ['indices', 'snapshots']:
             raise ValueError('invalid argument: {0}'.format(act_on))
 
         if act_on == 'indices':
-            return self.indices()
+            return self.indices(nofilters_showall=nofilters_showall)
         else:
-            return self.snapshots()
+            return self.snapshots(nofilters_showall=nofilters_showall)

@@ -97,11 +97,11 @@ class APICommands(object):
         return working_list
 
 
-    def fetch(self, act_on):
+    def fetch(self, act_on, nofilters_showall=False):
         """
         Forwarder method to indices/snapshots selector.
         """
-        return self.iselector.fetch(act_on=act_on)
+        return self.iselector.fetch(act_on=act_on, nofilters_showall=nofilters_showall)
 
 
     def command_kwargs(self, command):

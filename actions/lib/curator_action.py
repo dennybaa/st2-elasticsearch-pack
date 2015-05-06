@@ -64,12 +64,13 @@ class CuratorAction(Action):
             self.config.timeout = 21600
 
 
-    def show_dry_run(self, items):
+    def show_dry_run(self):
         """
         Log dry run output with the command which would have been executed.
         """
         client = self.api.client
         command = self.command
+        items = self.api.fetch(act_on=self.act_on, nofilters_showall=True)
         print "DRY RUN MODE.  No changes will be made."
         for item in items:
             if self.act_on == 'snapshots':
@@ -82,7 +83,7 @@ class CuratorAction(Action):
         """
         Show indices or snapshots command.
         """
-        items = self.api.fetch(act_on=self.act_on)
+        items = self.api.fetch(act_on=self.act_on, nofilters_showall=True)
         if not self.config.dry_run:
             for item in items:
                 print item
@@ -111,8 +112,7 @@ class CuratorAction(Action):
         self.command == "show" and self.do_show()
 
         if self.config.dry_run:
-            items = self.api.fetch(act_on=self.act_on)
-            self.show_dry_run(items)
+            self.show_dry_run()
         else:
             logger.info("Job starting: {0} {1}".format(self.command, self.act_on))
             logger.debug("Params: {0}".format(self.config))
