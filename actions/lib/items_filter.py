@@ -47,7 +47,7 @@ class ItemsFilter(object):
     @property
     def filter_list(self):
         return self.built_list
-   
+
 
     @property
     def closed_timerange(self):
@@ -72,7 +72,7 @@ class ItemsFilter(object):
         if result_list is None:
             result_list = working_list
 
-        # Apply filters one by one from the list.
+        # Apply filters one by one (if any) from the list.
         for f in self.built_list:
             is_timebased = f.get('method', None) in ('newer_than', 'older_than')
             # Don't apply timebased filters for a closed time range.

@@ -23,6 +23,13 @@ class ItemsSelector(object):
         :param act_on:  Specifies whether we act on indices or snapshots.
         """
         opts = self.opts
+        all_items_selected = opts.get('all_{0}'.format(act_on), None)
+
+        # Choose explicitly chosen indices or snapshots
+        if act_on == 'indices':
+            explicit_items = (opts.index or '').split(',')
+        else:
+            explicit_items = (opts.snapshot or '').split(',')
 
         # I don't care about using only timestring if it's a `dry_run` of show
         if not any((xstr(opts.newer_than), xstr(opts.older_than), opts.dry_run)) and \
@@ -31,21 +38,24 @@ class ItemsSelector(object):
             logger.warn('Actions can be performed on all {0} matching {1}'.format(act_on, opts.timestring))
 
         logger.debug("Full list of {0}: {1}".format(act_on, source_items))
-        
+
         if not source_items:
             print 'ERROR. No {0} found in Elasticsearch.'.format(act_on)
             sys.exit(1)
         else:
             working_list = source_items
 
-        # Apply filters to the working list
-        working_list = self.ifilter.apply(working_list, act_on=act_on)
+        # No filters has been added and not all items selected,
+        # this means index or snapshot parameter is used alone.
+        if not all_items_selected and not self.ifilter.filter_list:
+            working_list = []
+        else:
+            # Otherwise safly apply filtering
+            working_list = self.ifilter.apply(working_list, act_on=act_on)
 
-        # Handle items added via index or snapshot parameter.
-        mkey = 'index' if act_on == 'indices' else 'snapshot'
-        manual_items = (opts.get(mkey, None) or '').split(',')
-        if manual_items:
-            working_list.extend((i for i in manual_items if i in source_items))
+        # Include explict items into resulting working list.
+        if explicit_items:
+            working_list.extend((i for i in explicit_items if i in source_items))
 
         if not working_list:
             print 'No {0} matched provided args: {1}'.format(act_on, opts)
@@ -59,6 +69,10 @@ class ItemsSelector(object):
         """
         Get a list of snapshots to act on from the provided arguments.
         """
+        if not any((self.opts.all_snapshots, self.opts.snapshot, self.ifilter.filter_list)):
+            print 'Error: At least one snapshot filter parameter must be provided!'
+            sys.exit(1)
+
         if not self.opts.repository:
             print 'Missing required parameter: repository.'
             sys.exit(1)

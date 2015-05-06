@@ -5,6 +5,7 @@ from items_selector import ItemsSelector
 import curator.api as api
 import utils
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class APICommands(object):
     def __init__(self, **opts):
         self.opts = EasyDict(opts)
         self._client = None
-        self._iselector  = None 
+        self._iselector  = None
 
 
     @property
@@ -40,7 +41,7 @@ class APICommands(object):
         """
         if not self._iselector:
             self._iselector = ItemsSelector(self.client, **self.opts)
-        return self._iselector     
+        return self._iselector
 
 
     def command_acts_on(self, command):
@@ -74,7 +75,7 @@ class APICommands(object):
 
 
     def _enhanced_working_list(self, command):
-        """Enhance working_list by pruning kibana indices and filtering 
+        """Enhance working_list by pruning kibana indices and filtering
         disk space. Returns filter working list.
         :rtype: list
         """
@@ -109,7 +110,7 @@ class APICommands(object):
         Return kwargs dict for a specific command options or return empty dict.
         """
         opts = defaultdict(lambda: None, self.opts)
-        return compact_dict({
+        kwargs = {
             'alias': { 'alias': opts['name'], 'remove': opts['remove'] },
             'allocation': { 'rule': opts['rule'] },
             'bloom': { 'delay': opts['delay'] },
@@ -120,56 +121,61 @@ class APICommands(object):
                 'delay': opts['delay']
             },
             'snapshot': {
-                'name': opts['name'], 'prefix': opts['snapshot_prefix'], 
+                'name': opts['name'], 'prefix': opts['snapshot_prefix'],
                 'repository': opts['repository'], 'partial': opts['partial'],
                 'ignore_unavailable': opts['ignore_unavailable'],
                 'include_global_state': opts['include_global_state'],
                 'wait_for_completion': opts['wait_for_completion'],
                 'request_timeout': opts['request_timeout']
             }
-        }).get(command, {})
+        }.get(command, {})
+        return compact_dict(kwargs)
 
 
-    def _call_api(self, command, working_list):
+    def _call_api(self, command, *args, **kwargs):
+        """Invoke curator api method call.
+        """
         func_name = CMD_TO_API.get(command, command)
         api_method = api.__dict__.get(func_name)
-        kwargs = self.command_kwargs(command)
+        return api_method(self.client, *args, **kwargs)
 
-        return api_method(self.client, working_list, **kwargs)
 
-        
     def command_on_indices(self, command, working_list):
-        """Invoke command which acts on indices
+        """Invoke command which acts on indices and perform an api call.
         """
-        # The snapshot command should get the full list of indices.
-        if command == 'snapshot':
-            return self._call_api(command, working_list)
-
+        kwargs = self.command_kwargs(command)
         # List is too big and it will be proceeded in chunks.
-        elif len(api.utils.to_csv(working_list)) > 3072:           
+        if len(api.utils.to_csv(working_list)) > 3072:
             logger.warn('Very large list of indices.  Breaking it up into smaller chunks.')
             success = True
             for indices in chunk_index_list(working_list):
-                if not self._call_api(command, indices):
+                if not self._call_api(command, *(indices), **kwargs):
                     success = False
             return success
         else:
-            return self._call_api(command, working_list)
+            return self._call_api(command, *(working_list), **kwargs)
 
 
     def command_on_snapshots(self, command, working_list):
-        """Invoke command which acts on snapshots
+        """Invoke command which acts on snapshots and perform an api call.
         """
-        if command != 'delete.snapshots':
+        if command == 'snapshot':
+            kwargs = self.command_kwargs(command)
+            # The snapshot command should get the full (not chunked)
+            # list of indices.
+            kwargs['indices'] = working_list
+            return self._call_api(command, **kwargs)
+
+        elif command == 'delete.snapshots':
+            success = True
+            for s in working_list:
+                if not self._call_api(command, repository=self.opts.repository,
+                                               snapshot=s):
+                    success = False
+            return success
+        else:
             # should never get here
             raise RuntimeError("Unexpected method `{0}'".format(command))
-
-        success = True
-        for s in working_list:
-            if not self._call_api(command, repository=self.opts.repository,
-                                          snapshot=s):
-                success = False
-            return success
 
 
     def invoke(self, command=None):
@@ -181,7 +187,9 @@ class APICommands(object):
         act_on = self.command_acts_on(command)
         working_list = self._enhanced_working_list(command)
 
-        if act_on == 'indices':
+        if act_on == 'indices' and command != 'snapshot':
             return self.command_on_indices(command, working_list)
         else:
+            # Command on snapshots and snapshot command (which
+            # actually has selected indices before).
             return self.command_on_snapshots(command, working_list)

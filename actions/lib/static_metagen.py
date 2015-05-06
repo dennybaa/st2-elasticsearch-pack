@@ -56,7 +56,7 @@ class StaticMetagen(object):
         "runner_type": "run-python",
         "description": "Run a Meta Action through a generic Runner.",
         "enabled": True,
-        "entry_point": "runner.py"}
+        "entry_point": "curator_runner.py"}
 
     parameter_meta = {
         "type": "string"

@@ -1,6 +1,6 @@
 from st2actions.runners.pythonrunner import Action
 from curator.api.utils import index_closed
-from api_commands import APICommands
+from curator_api_commands import APICommands
 import utils
 import logging
 import sys
