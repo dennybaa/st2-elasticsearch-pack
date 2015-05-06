@@ -55,3 +55,70 @@ Parameter | Description | Details
 **timestring** | Timestring is the pattern used for matching the dates in indices and snapshots. | ex. `%Y.%m.%d`, see. [python strftime formatting](https://docs.python.org/2/library/datetime.html#strftime-and-strptime-behavior)
 **regex** | Include only indices or snapshots matching the provided pattern.
 **exclude** | A comma separated list of patterns specifying indices or snapshots to exclude. | **NOT READY**
+
+### Indices selection only
+
+Parameter | Description | Details
+------------ | ------------ | ------------
+**index** | Comma separated string of index names to be included into the operation. | Indices added with this option **will not** be filtered by any of the other index selection parameters.
+**all_indices** | Set to `true` to operate on all indices in a cluster. | This option overrides other filtering parameters except **exclude**.
+
+### Snapshot selection only
+
+Parameter | Description | Details
+------------ | ------------ | ------------
+**snapshot** | Comma separated string of snapshot names to be included into the operation. | Snapshots added with this option **will not** be filtered by any of the other snapshot selection parameters.
+**all_snapshots** | Set to `true` to operate on all snapshots in a cluster. | This option overrides other filtering parameters except **exclude**.
+**repository** | Provides the repository name for snapshot operations (**required**).
+
+## Usage and examples
+
+Performing *curator operations* on indices or snapshots **at least one** filtering parameter must be specified. That's a generic rule applied to all of curator actions except *show*,  *show* will act on all indices or snapshots if there aren't any other filtering options.
+
+Now let's have at a few invocation examples.
+
+### Show and deleting indices
+
+* Show indices older than 2 days:
+```
+st2 run elastic.show.indices host=elk older_than=2 timestring=%Y.%m.%d
+```
+Shows this on my node:
+```json
+{
+    "result": null, 
+    "exit_code": 0, 
+    "stderr": "", 
+    "stdout": "logstash-2015.05.02
+logstash-2015.05.04
+"
+}
+```
+* Delete all indices matching *^logstash.\**:
+
+```
+st2 run elastic.delete.indices host=elk prefix=logstash
+```
+
+### Snapshot operations
+
+* Create a snapshot of indices  based on time range criteria:
+```
+st2 run elastic.snapshot host=elk repository=my_backup newer_than=20 older_than=10 timestring=%Y.%m.%d
+```
+
+This command will create a snapshot of indices newer than 20 days and older than 10 days. Notice that filtering parameters of snapshot command *apply to indices* not to snapshots. That's why it's important not to mess it up. For example, the timestring parameter when created by curator with default options has a different time scheme.
+
+* Delete specific snapshots:
+```
+st2 run elastic.delete.snapshots host=elk repository=my_backup snapshot=curator-20150506155615,curator-20150506155619
+```
+* Delete all snapshots:
+```
+st2 run elastic.delete.snapshots host=elk repository=my_backup all_indices=true
+```
+
+## License and Authors
+
+* Author:: StackStorm (st2-dev) (<info@stackstorm.com>)
+* Author:: Denis Baryshev (<dennybaa@gmail.com>)
