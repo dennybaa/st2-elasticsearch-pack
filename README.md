@@ -31,7 +31,7 @@ These parameters include general options such as elasticsearch host, port etc.
 
 Parameter | Description | Default
 ------------ | ------------ | ------------
-**host** | Specifies Elasticsearch host to connect to (**required**). | `host_or_ip` | `none`
+**host** | Specifies Elasticsearch host to connect to (**required**). | `none`
 **url_prefix** | Specifies Elasticsearch http url prefix. | `/`
 **port** | Specifies port remote Elasticsearch instance is running on. | `9200`
 **use_ssl** | Set to `true` to connect to Elasticsearch through SSL. | `false`
