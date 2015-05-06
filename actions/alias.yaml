@@ -1,7 +1,7 @@
 ---
 description: Index Aliasing
 enabled: true
-entry_point: runner.py
+entry_point: curator_runner.py
 name: alias
 parameters:
   action:
@@ -72,7 +72,7 @@ parameters:
     type: string
   timeout:
     default: 600
-    description: ElasticSearch operation timeout in seconds.
+    description: Elasticsearch operation timeout in seconds.
     type: integer
   timestring:
     description: Python strftime string to match your index definition, e.g. 2015.07.15

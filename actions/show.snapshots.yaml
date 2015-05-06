@@ -1,7 +1,7 @@
 ---
 description: Show snapshots
 enabled: true
-entry_point: runner.py
+entry_point: curator_runner.py
 name: show.snapshots
 parameters:
   action:
@@ -66,7 +66,7 @@ parameters:
     type: string
   timeout:
     default: 600
-    description: ElasticSearch operation timeout in seconds.
+    description: Elasticsearch operation timeout in seconds.
     type: integer
   timestring:
     description: Python strftime string to match your snapshot's definition, e.g.

@@ -220,7 +220,7 @@
 - alias:
     description: "Index Aliasing"
     parameters:
-      name:         
+      name:
         description: "Alias name"
         required: true
       remove:
@@ -265,7 +265,7 @@
 - allocation:
     description: "Index Allocation"
     parameters:
-      rule:         
+      rule:
         description: "Routing allocation rule to apply, e.g. tag=ssd"
         required: true
 
@@ -305,7 +305,7 @@
 - bloom:
     description: "Disable bloom filter cache"
     parameters:
-      delay:         
+      delay:
         description: "Pause *n* seconds after disabling bloom filter cache of an index."
         type: "integer"
         default: 0
@@ -416,7 +416,7 @@
 - optimize:
     description: "Optimize indices"
     parameters:
-      delay:         
+      delay:
         description: "Pause *n* seconds after optimizing an index."
         type: "integer"
         default: 0
@@ -465,7 +465,7 @@
 - replicas:
     description: "Replica Count Per-shard"
     parameters:
-      count:         
+      count:
         description: "Number of replicas the indices should have."
         type: "integer"
         required: true
