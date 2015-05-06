@@ -5,7 +5,6 @@ from items_selector import ItemsSelector
 import curator.api as api
 import utils
 import logging
-import sys
 
 logger = logging.getLogger(__name__)
 
