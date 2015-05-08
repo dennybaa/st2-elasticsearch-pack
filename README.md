@@ -54,7 +54,7 @@ Parameter | Description | Details
 **time_unit** | Specifies the time interval between indices or snapshots \[hours\|days\|weeks\|months\]. | (default: `days`)
 **timestring** | Timestring is the pattern used for matching the dates in indices and snapshots. | ex. `%Y.%m.%d`, see. [python strftime formatting](https://docs.python.org/2/library/datetime.html#strftime-and-strptime-behavior)
 **regex** | Include only indices or snapshots matching the provided pattern.
-**exclude** | A comma separated list of patterns specifying indices or snapshots to exclude. | **NOT READY**
+**exclude** | A comma separated list of patterns specifying indices or snapshots to exclude.
 
 ### Indices selection only
 

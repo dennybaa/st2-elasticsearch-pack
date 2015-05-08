@@ -148,4 +148,9 @@ class ItemsFilter(object):
             f = api.filter.build_filter(kindOf=opt, value=value)
             if f: filter_list.append(f)
 
+        # Add exclude filter
+        for pattern in (opts.exclude or '').split(','):
+            f = {'pattern':  pattern, 'exclude': True}
+            filter_list.append(f)
+
         return filter_list
