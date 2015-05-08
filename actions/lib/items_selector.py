@@ -27,9 +27,9 @@ class ItemsSelector(object):
 
         # Choose explicitly chosen indices or snapshots
         if act_on == 'indices':
-            explicit_items = (opts.index or '').split(',')
+            explicit_items = filter(None, (opts.index or '').split(','))
         else:
-            explicit_items = (opts.snapshot or '').split(',')
+            explicit_items = filter(None, (opts.snapshot or '').split(','))
 
         # I don't care about using only timestring if it's a `dry_run` of show
         if not any((xstr(opts.newer_than), xstr(opts.older_than), opts.dry_run)) and \
@@ -50,7 +50,7 @@ class ItemsSelector(object):
         if not all_items_selected and not self.ifilter.filter_list:
             working_list = []
         else:
-            # Otherwise safly apply filtering
+            # Otherwise safely apply filtering
             working_list = self.ifilter.apply(working_list, act_on=act_on)
 
         # Include explict items into resulting working list.
