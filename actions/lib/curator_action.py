@@ -1,14 +1,13 @@
-from st2actions.runners.pythonrunner import Action
 from curator.api.utils import index_closed
 from curator_api_commands import APICommands
-import utils
+from elastic_action import ElasticAction
 import logging
 import sys
 
 logger = logging.getLogger(__name__)
 
 
-class CuratorAction(Action):
+class CuratorAction(ElasticAction):
 
     def __init__(self, config=None):
         super(CuratorAction, self).__init__(config=config)
@@ -38,17 +37,6 @@ class CuratorAction(Action):
         return self._api
 
 
-    def set_up_logging(self):
-        """
-        Set log_level. Default is to display warnings.
-        """
-        log_level = self.config.log_level or 'warn'
-        numeric_log_level = getattr(logging, log_level.upper(), None)
-        if not isinstance(numeric_log_level, int):
-            raise ValueError('Invalid log level: {0}'.format(log_level))
-        logging.basicConfig(level=numeric_log_level)
-
-
     def override_timeout(self):
         """
         Overides default timeout for long lasting operations. Sets it to 6 hours.
@@ -68,7 +56,6 @@ class CuratorAction(Action):
         """
         Log dry run output with the command which would have been executed.
         """
-        client = self.api.client
         command = self.command
         items = self.api.fetch(act_on=self.act_on, nofilters_showall=True)
         print "DRY RUN MODE.  No changes will be made."
@@ -76,7 +63,7 @@ class CuratorAction(Action):
             if self.act_on == 'snapshots':
                 print "DRY RUN: {0}: {1}".format(command, item)
             else:
-                print "DRY RUN: {0}: {1}{2}".format(command, item, ' (CLOSED)' if index_closed(client, item) else '')
+                print "DRY RUN: {0}: {1}{2}".format(command, item, ' (CLOSED)' if index_closed(self.client, item) else '')
 
 
     def do_show(self):

@@ -1,9 +1,7 @@
 from easydict import EasyDict
 from lib.curator_action import CuratorAction
 import logging
-
 import sys
-import yaml
 
 logger = logging.getLogger(__name__)
 
