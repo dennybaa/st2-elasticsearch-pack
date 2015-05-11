@@ -27,7 +27,7 @@ parameters:
     type: integer
     default: 10
   pretty:
-    description: Pretty print JSON response
+    description: Pretty print JSON response.
     type: boolean
     default: False
 

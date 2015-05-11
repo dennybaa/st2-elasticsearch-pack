@@ -71,6 +71,35 @@ Parameter | Description | Details
 **all_snapshots** | Set to `true` to operate on all snapshots in a cluster. | This option overrides other filtering parameters except **exclude**.
 **repository** | Provides the repository name for snapshot operations (**required**).
 
+## Search actions
+
+Search actions perform a specified query in Elasticsearch. There are two search actions available: **search.q** and **search.body**. The first one takes a query string (given in lucene syntax), while the former allows to perform more sophisticated searches using Elasticsearch query DSL.
+
+Both search actions use the same [common parameters]() as curator based actions.
+
+### search.q specific parameters
+
+This action is enhanced with [index selection](#Indices/snapshots selection parameters) parameters to simplify indices matching.
+
+Parameter | Description
+------------ | ------------
+**q** | Query in the Lucene query string syntax (**required**).
+**df** | The default field to use when no field prefix is defined within the query.
+**default_operator** | The default operator to be used, can be AND or OR. Defaults to OR.
+**from** | The starting from index of the hits to return. Defaults to 0.
+**size** | The number of hits to return. Defaults to 10.
+**pretty** | Set to `true` to pretty print JSON response.
+
+### search.body specific parameters
+
+Parameter | Description 
+------------ | ------------
+**body** | The search definition using the Query DSL (**required**). 
+**indices** | A comma-separated list of index names to search. Defaults to `"_all"`.
+**from** | The starting from index of the hits to return. Defaults to 0.
+**size** | The number of hits to return. Defaults to 10.
+**pretty** | Set to `true` to pretty print JSON response.
+
 ## Usage and examples
 
 Performing *curator operations* on indices or snapshots **at least one** filtering parameter must be specified. That's a generic rule applied to all of curator actions except *show*,  *show* will act on all indices or snapshots if there aren't any other filtering options.
@@ -117,6 +146,23 @@ st2 run elastic.delete.snapshots host=elk repository=my_backup snapshot=curator-
 ```
 st2 run elastic.delete.snapshots host=elk repository=my_backup all_indices=true
 ```
+
+### Querying Elasticsearch
+
+On successful search (*total hits > 0*) query actions exit with *return code* == 0, if no documents have been found *return code* == 1. In all other case such as execution exceptions *return code* is 99.
+
+Let's look at a few examples:
+
+* Run query using DSL syntax:
+```
+st2 run elastic.search.body host=elk body='{"query":{"match_all":{}}}' pretty=true
+```
+
+* Run query using URI syntax where **q** is a Lucene string:
+```
+st2 run elastic.search.q host=elk q='message:my_log_event' prefix=logstash
+```
+
 
 ## License and Authors
 
